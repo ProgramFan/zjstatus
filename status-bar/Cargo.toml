@@ -1,0 +1,29 @@
+[package]
+name = "status-bar"
+version = "0.1.0"
+authors = ["Brooks J Rady <b.j.rady@gmail.com>"]
+edition = "2021"
+license = "MIT"
+description = "Zellij's status-bar plugin (v0.45.1) with colour fixes, see README.md"
+
+# standalone crate, not part of the zjstatus package
+[workspace]
+
+[profile.release]
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+
+[dependencies]
+ansi_term = { version = "0.12.1", default-features = false }
+lazy_static = { version = "1.4.0", default-features = false }
+rand = { version = "0.10.2", default-features = false, features = ["std", "std_rng", "thread_rng"] }
+serde = { version = "1.0", default-features = false, features = ["derive", "std"] }
+serde_json = { version = "1.0", default-features = false, features = ["std"] }
+thiserror = { version = "2.0.18", default-features = false, features = ["std"] }
+unicode-width = { version = "0.2.2", default-features = false }
+zellij-tile = "0.45.1"
+zellij-tile-utils = "0.45.1"
+
+[dev-dependencies]
+regex = "1"

@@ -2,3 +2,4 @@
 .direnv/
 .zjstatus.log
 .zjframes.log
+/status-bar/target
