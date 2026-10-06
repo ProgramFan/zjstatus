@@ -15,7 +15,7 @@ use zjstatus::{
         pipe::PipeWidget,
         session::SessionWidget,
         swap_layout::SwapLayoutWidget,
-        tabs::TabsWidget,
+        tabs::{self, TabsWidget},
         widget::Widget,
     },
 };
@@ -32,8 +32,26 @@ struct State {
     module_config: config::ModuleConfig,
     widget_map: BTreeMap<String, Arc<dyn Widget>>,
     focus_cwd_commands: Vec<String>,
+    tab_naming: TabNaming,
     err: Option<anyhow::Error>,
 }
+
+// Progress of naming the tab of this plugin instance after its initial command.
+#[derive(Default, Debug, PartialEq)]
+enum TabNaming {
+    // disabled, or the tab has its final name
+    #[default]
+    Done,
+    Pending,
+    // named, but a shell that is still starting up may have had another command in front
+    Settling {
+        name: String,
+        checks_left: u8,
+    },
+}
+
+// Timer ticks to wait for the command of a freshly named tab to settle.
+const TAB_NAMING_CHECKS: u8 = 5;
 
 #[cfg(not(test))]
 register_plugin!(State);
@@ -92,6 +110,10 @@ impl ZellijPlugin for State {
         self.widget_map = register_widgets(&configuration);
         self.focus_cwd_commands =
             zjstatus::widgets::command::focus_cwd_command_names(&configuration);
+        self.tab_naming = match configuration.get("tab_initial_name").map(String::as_str) {
+            Some("command") => TabNaming::Pending,
+            _ => TabNaming::Done,
+        };
         self.userspace_configuration = configuration;
         self.pending_events = Vec::new();
         self.got_permissions = false;
@@ -236,6 +258,64 @@ impl State {
         }
     }
 
+    // Names the tab of this plugin instance after the command it was started with, which
+    // makes it a regular tab name the user is free to change afterwards.
+    fn name_own_tab(&mut self, timer_tick: bool) {
+        let (expected_name, checks_left) = match &self.tab_naming {
+            TabNaming::Done => return,
+            TabNaming::Pending => (None, TAB_NAMING_CHECKS),
+            // the command is only checked again once it had some time to change
+            TabNaming::Settling { .. } if !timer_tick => return,
+            TabNaming::Settling { name, checks_left } => (Some(name.clone()), *checks_left),
+        };
+
+        let plugin_id = get_plugin_ids().plugin_id;
+        let Some(tab) = tabs::tab_of_plugin(plugin_id, &self.state.tabs, &self.state.panes) else {
+            return;
+        };
+        let Some(pane) = tabs::focused_terminal_pane(tab, &self.state.panes) else {
+            return;
+        };
+
+        // Zellij reports the pane title as the name of unnamed single pane tabs, so the
+        // stored name is needed to tell whether the tab is still ours to name.
+        let Some(stored_name) = get_tab_info(tab.tab_id).map(|info| info.name) else {
+            return;
+        };
+        let untouched = match &expected_name {
+            Some(name) => stored_name == *name,
+            None => tabs::is_default_tab_name(&stored_name),
+        };
+        if !untouched {
+            self.tab_naming = TabNaming::Done;
+            return;
+        }
+
+        let command = match get_pane_running_command(PaneId::Terminal(pane.id)) {
+            Ok(command_line) => tabs::command_name(&command_line),
+            Err(e) => {
+                tracing::debug!("could not get pane command: {e}");
+                None
+            }
+        };
+        let Some(command) = command else {
+            return;
+        };
+
+        tracing::debug!(tab_id = tab.tab_id, command, expected_name);
+
+        if expected_name.as_ref() == Some(&command) || checks_left == 0 {
+            self.tab_naming = TabNaming::Done;
+            return;
+        }
+
+        rename_tab_with_id(tab.tab_id as u64, &command);
+        self.tab_naming = TabNaming::Settling {
+            name: command,
+            checks_left: checks_left - 1,
+        };
+    }
+
     fn handle_event(&mut self, event: Event) -> bool {
         let mut should_render = false;
         match event {
@@ -282,6 +362,7 @@ impl State {
                 self.state.cache_mask = UpdateEventMask::Tab as u8;
 
                 self.update_focused_pane();
+                self.name_own_tab(false);
 
                 should_render = true;
             }
@@ -375,12 +456,16 @@ impl State {
                 self.state.cache_mask = UpdateEventMask::Tab as u8;
                 self.state.tabs = tab_info;
 
+                self.name_own_tab(false);
+
                 should_render = true;
             }
             Event::Timer(_) => {
                 tracing::Span::current().record("event_type", "Event::Timer");
                 set_timeout(REFRESH_INTERVAL_SECONDS);
                 self.state.cache_mask = 0;
+
+                self.name_own_tab(true);
 
                 should_render = true;
             }
