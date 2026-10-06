@@ -1,5 +1,6 @@
 pub mod command;
 pub mod datetime;
+pub mod hostname;
 pub mod mode;
 pub mod notification;
 pub mod pipe;

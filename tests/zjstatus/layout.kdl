@@ -11,7 +11,7 @@ layout {
 
             format_left               "{mode}#[fg=$blue,bg=$bg,bold] {session}"
             format_center             "{tabs} {command_3} {pipe_1}"
-            format_right              "{notifications}{datetime}"
+            format_right              "{notifications}{datetime}{hostname}"
             format_space              "#[bg=$bg]"
             format_precedence         "lrc"
             format_hide_on_overlength "false"
@@ -81,6 +81,9 @@ layout {
             command_3_format    "{stdout}"
             command_3_interval  "10"
             command_3_rendermode "dynamic"
+
+            hostname_format "#[fg=$bg,bg=$blue,bold] {name} "
+            hostname_short  "true"
 
             datetime             "#[fg=#6C7086,bg=$bg,bold] {format} #[bg=#6C7086,fg=$bg,bold] {time}"
             datetime_time_format "%H:%M:%S"

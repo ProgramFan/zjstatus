@@ -185,6 +185,7 @@ The following widgets are available:
 
 - [command](https://github.com/dj95/zjstatus/wiki/4-%E2%80%90-Widgets#command)
 - [datetime](https://github.com/dj95/zjstatus/wiki/4-%E2%80%90-Widgets#datetime)
+- hostname
 - [mode](https://github.com/dj95/zjstatus/wiki/4-%E2%80%90-Widgets#mode)
 - [notifications](https://github.com/dj95/zjstatus/wiki/4-%E2%80%90-Widgets#notifications)
 - [pipe](https://github.com/dj95/zjstatus/wiki/4-%E2%80%90-Widgets#pipe)

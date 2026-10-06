@@ -61,6 +61,7 @@ pub fn event_mask_from_widget_name(name: &str) -> u8 {
     match name {
         "command" => UpdateEventMask::Always as u8,
         "datetime" => UpdateEventMask::Always as u8,
+        "hostname" => UpdateEventMask::Always as u8,
         "mode" => UpdateEventMask::Mode as u8,
         "notifications" => UpdateEventMask::Always as u8,
         "session" => UpdateEventMask::Mode as u8,

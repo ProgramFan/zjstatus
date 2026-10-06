@@ -391,7 +391,7 @@ fn get_timestamp_from_event_or_default(
     }
 }
 
-fn lock(name: &str, state: ZellijState) -> bool {
+pub(crate) fn lock(name: &str, state: ZellijState) -> bool {
     let path = format!("/tmp/{}.{}.lock", state.plugin_uuid, name);
 
     if !Path::new(&path).exists() {

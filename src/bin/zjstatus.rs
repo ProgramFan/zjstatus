@@ -10,6 +10,7 @@ use zjstatus::{
     widgets::{
         command::{CommandResult, CommandWidget},
         datetime::DateTimeWidget,
+        hostname::HostnameWidget,
         mode::ModeWidget,
         notification::NotificationWidget,
         pipe::PipeWidget,
@@ -485,6 +486,10 @@ fn register_widgets(configuration: &BTreeMap<String, String>) -> BTreeMap<String
     widget_map.insert(
         "datetime".to_owned(),
         Arc::new(DateTimeWidget::new(configuration)),
+    );
+    widget_map.insert(
+        "hostname".to_owned(),
+        Arc::new(HostnameWidget::new(configuration)),
     );
     widget_map.insert("pipe".to_owned(), Arc::new(PipeWidget::new(configuration)));
     widget_map.insert(
