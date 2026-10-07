@@ -13,7 +13,10 @@ with `zjstatus:` comments in the source.
   (`text_unselected.background`). Upstream draws it on `ribbon_selected.base`,
   the text colour of the active ribbon, so themes with light text on the
   active ribbon get a light block.
-- The plugin requests its permissions, as it is no longer built in.
+- The plugin requests its permissions, as it is no longer built in. On first
+  load zellij shows `This plugin asks permission to: ... Allow? (y/n)` in
+  place of the bar: click on that line (or move the focus to it) and press
+  `y`. The bar is only focusable until the request is answered.
 
 ## Usage
 

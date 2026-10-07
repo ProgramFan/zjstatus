@@ -237,13 +237,15 @@ impl ZellijPlugin for State {
             .get("classic")
             .map(|c| c == "true")
             .unwrap_or(false);
-        // zjstatus: built-in plugins get these implicitly, plugins loaded from a file do not
+        // zjstatus: built-in plugins get these implicitly, plugins loaded from a file do not.
+        // The pane stays selectable until the request is answered, since the user has to
+        // focus it in order to answer the prompt zellij shows in its place.
         request_permission(&[
             PermissionType::ReadApplicationState,
             PermissionType::ChangeApplicationState,
         ]);
-        set_selectable(false);
         subscribe(&[
+            EventType::PermissionRequestResult,
             EventType::ModeUpdate,
             EventType::TabUpdate,
             EventType::PaneUpdate,
@@ -258,6 +260,10 @@ impl ZellijPlugin for State {
     fn update(&mut self, event: Event) -> bool {
         let mut should_render = false;
         match event {
+            Event::PermissionRequestResult(_) => {
+                set_selectable(false);
+                should_render = true;
+            },
             Event::InitialKeybinds(keybinds) => {
                 self.cached_keybinds = keybinds;
                 if !self.cached_keybinds.is_empty() {
